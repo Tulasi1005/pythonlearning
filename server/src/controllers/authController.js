@@ -67,7 +67,10 @@ export const authController = {
 
   async logout(req, res, next) {
     try {
-      const sessionToken = req.sessionToken || req.cookies?.[config.cookieName];
+      const authHeader = req.headers.authorization?.startsWith("Bearer ")
+        ? req.headers.authorization.split(" ")[1]
+        : null;
+      const sessionToken = req.sessionToken || req.cookies?.[config.cookieName] || authHeader;
       if (sessionToken) {
         await authService.logout(sessionToken);
       }

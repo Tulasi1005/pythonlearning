@@ -52,9 +52,11 @@ export async function signUpUser({
   });
 
   const user = res.data?.user;
-  if (user && typeof window !== "undefined") {
-    if (user.stage) localStorage.setItem("learningStage", user.stage);
-    if (user.language) localStorage.setItem("learningLanguage", user.language);
+  const token = res.data?.token;
+  if (typeof window !== "undefined") {
+    if (token) localStorage.setItem("py_token", token);
+    if (user?.stage) localStorage.setItem("learningStage", user.stage);
+    if (user?.language) localStorage.setItem("learningLanguage", user.language);
   }
   return user;
 }
@@ -70,9 +72,11 @@ export async function loginUser({ emailOrUsername, password, rememberMe = true }
   });
 
   const user = res.data?.user;
-  if (user && typeof window !== "undefined") {
-    if (user.stage) localStorage.setItem("learningStage", user.stage);
-    if (user.language) localStorage.setItem("learningLanguage", user.language);
+  const token = res.data?.token;
+  if (typeof window !== "undefined") {
+    if (token) localStorage.setItem("py_token", token);
+    if (user?.stage) localStorage.setItem("learningStage", user.stage);
+    if (user?.language) localStorage.setItem("learningLanguage", user.language);
   }
   return user;
 }
@@ -85,6 +89,10 @@ export async function logoutUser() {
     await apiClient.post("/auth/logout", {});
   } catch (err) {
     // ignore
+  } finally {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("py_token");
+    }
   }
 }
 

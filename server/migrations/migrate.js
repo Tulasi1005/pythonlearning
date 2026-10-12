@@ -18,30 +18,37 @@ export async function runMigrations(dbUrl = process.env.DATABASE_URL) {
   const parsedUrl = new URL(dbUrl);
   const targetDbName = parsedUrl.pathname.replace(/^\//, "");
   
-  // Connect to default 'postgres' database to ensure target DB exists
-  const rootUrl = `${parsedUrl.protocol}//${parsedUrl.username}:${parsedUrl.password}@${parsedUrl.host}/postgres`;
-  const adminClient = new Client({ connectionString: rootUrl });
+  const isLocal = dbUrl.includes("localhost") || dbUrl.includes("127.0.0.1");
 
-  try {
-    await adminClient.connect();
-    const checkDb = await adminClient.query(
-      "SELECT 1 FROM pg_database WHERE datname = $1",
-      [targetDbName]
-    );
+  // Connect to default 'postgres' database to ensure target DB exists (only on local environments)
+  if (isLocal) {
+    const rootUrl = `${parsedUrl.protocol}//${parsedUrl.username}:${parsedUrl.password}@${parsedUrl.host}/postgres`;
+    const adminClient = new Client({ connectionString: rootUrl });
 
-    if (checkDb.rows.length === 0) {
-      console.log(`Creating database "${targetDbName}"...`);
-      await adminClient.query(`CREATE DATABASE "${targetDbName}"`);
-      console.log(`Database "${targetDbName}" created successfully.`);
+    try {
+      await adminClient.connect();
+      const checkDb = await adminClient.query(
+        "SELECT 1 FROM pg_database WHERE datname = $1",
+        [targetDbName]
+      );
+
+      if (checkDb.rows.length === 0) {
+        console.log(`Creating database "${targetDbName}"...`);
+        await adminClient.query(`CREATE DATABASE "${targetDbName}"`);
+        console.log(`Database "${targetDbName}" created successfully.`);
+      }
+    } catch (err) {
+      console.warn(`Note when checking database creation: ${err.message}`);
+    } finally {
+      await adminClient.end().catch(() => {});
     }
-  } catch (err) {
-    console.warn(`Note when checking database creation: ${err.message}`);
-  } finally {
-    await adminClient.end().catch(() => {});
   }
 
   // Connect to target database and execute migrations
-  const pool = new Pool({ connectionString: dbUrl });
+  const pool = new Pool({
+    connectionString: dbUrl,
+    ssl: isLocal ? false : { rejectUnauthorized: false }
+  });
   try {
     const client = await pool.connect();
     try {

@@ -11,6 +11,12 @@ export const progressService = {
 
   async toggleCompletion(userId, topicId, completed = true) {
     return await withTransaction(async (client) => {
+      // Serialize concurrent reward and progress mutations per user
+      await client.query(
+        "SELECT id FROM user_rewards WHERE user_id = $1 FOR UPDATE",
+        [userId]
+      );
+
       const { record, wasAlreadyCompleted } = await progressRepository.toggleCompletion(
         userId,
         topicId,
@@ -41,6 +47,12 @@ export const progressService = {
 
   async recordQuiz(userId, topicId, scorePercent) {
     return await withTransaction(async (client) => {
+      // Serialize concurrent quiz submissions per user
+      await client.query(
+        "SELECT id FROM user_rewards WHERE user_id = $1 FOR UPDATE",
+        [userId]
+      );
+
       const prevProgress = await progressRepository.getTopicProgress(userId, topicId, client);
       const prevScore = prevProgress?.quiz_score || 0;
 

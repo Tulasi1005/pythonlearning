@@ -237,6 +237,7 @@ export default function LessonContent({
             <button
               onClick={onBackToLearn}
               className="text-xs sm:text-sm font-semibold text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition flex items-center gap-1.5 cursor-pointer bg-transparent border-none p-0"
+              title="Return to curriculum modules"
             >
               <ArrowLeft size={16} />
               <span>{section.title}</span>
@@ -245,6 +246,17 @@ export default function LessonContent({
             <span className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200">
               Topic {topicIndex} of {totalTopics}
             </span>
+
+            {adjacent.prev && (
+              <button
+                onClick={() => onSelectTopic(adjacent.prev.id)}
+                className="ml-1 inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-950/60 dark:hover:text-indigo-300 border border-slate-200 dark:border-slate-700 transition cursor-pointer"
+                title={`Back to: ${adjacent.prev.title}`}
+              >
+                <ArrowLeft size={13} />
+                <span>Back to Previous</span>
+              </button>
+            )}
           </div>
 
           {/* Current Stage, Language & Bookmark Badges */}
@@ -503,8 +515,27 @@ export default function LessonContent({
                 </div>
               )}
 
-              {/* Primary Action Button */}
-              <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-end gap-2.5">
+              {/* Navigation Action Buttons */}
+              <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3">
+                {adjacent.prev ? (
+                  <button
+                    onClick={() => onSelectTopic(adjacent.prev.id)}
+                    className="btn-vibrant-secondary w-full sm:w-auto"
+                    title={`Go back to ${adjacent.prev.title}`}
+                  >
+                    <ArrowLeft size={16} />
+                    <span>Previous: "{adjacent.prev.title}"</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={onBackToLearn}
+                    className="btn-vibrant-secondary w-full sm:w-auto"
+                  >
+                    <ArrowLeft size={16} />
+                    <span>Back to Curriculum</span>
+                  </button>
+                )}
+
                 <button
                   onClick={() => goToStep("example")}
                   className="btn-vibrant-primary w-full sm:w-auto"
@@ -913,12 +944,21 @@ export default function LessonContent({
                       </span>
                     </div>
                   </div>
-                  <button
-                    onClick={() => setAutoNextPaused(!autoNextPaused)}
-                    className="text-xs font-bold text-slate-700 dark:text-slate-300 px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shrink-0 hover:bg-slate-100 dark:hover:bg-slate-700 transition"
-                  >
-                    {autoNextPaused ? "Resume" : "Pause"}
-                  </button>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      onClick={() => setAutoNextPaused(!autoNextPaused)}
+                      className="text-xs font-bold text-slate-700 dark:text-slate-300 px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition cursor-pointer"
+                    >
+                      {autoNextPaused ? "Resume" : "Pause"}
+                    </button>
+                    <button
+                      onClick={() => setAutoNextCountdown(null)}
+                      className="text-xs font-bold text-slate-500 hover:text-rose-600 dark:text-slate-400 dark:hover:text-rose-400 px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 transition cursor-pointer"
+                      title="Stay on this lesson"
+                    >
+                      Stay Here
+                    </button>
+                  </div>
                 </div>
               )}
 
@@ -959,34 +999,45 @@ export default function LessonContent({
                 </div>
               </div>
 
-              {/* Primary Next Action */}
+              {/* Primary Navigation Actions */}
               <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col items-center gap-3">
-                {adjacent.next ? (
-                  <button
-                    onClick={handleOpenNextChapter}
-                    className="btn-vibrant-primary w-full sm:w-auto"
-                  >
-                    <span>Open Next Chapter: "{adjacent.next.title}"</span>
-                    <ArrowRight size={18} />
-                  </button>
-                ) : nextSection ? (
-                  <button
-                    onClick={handleOpenNextChapter}
-                    className="btn-vibrant-primary w-full sm:w-auto"
-                  >
-                    <span>🎉 Start Next Section: "{nextSection.title}"</span>
-                    <ArrowRight size={18} />
-                  </button>
-                ) : (
-                  <div className="flex flex-col sm:flex-row items-center gap-2">
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 w-full">
+                  {adjacent.prev && (
+                    <button
+                      onClick={() => onSelectTopic(adjacent.prev.id)}
+                      className="btn-vibrant-secondary w-full sm:w-auto"
+                      title={`Go back to ${adjacent.prev.title}`}
+                    >
+                      <ArrowLeft size={18} />
+                      <span>Previous Chapter: "{adjacent.prev.title}"</span>
+                    </button>
+                  )}
+
+                  {adjacent.next ? (
+                    <button
+                      onClick={handleOpenNextChapter}
+                      className="btn-vibrant-primary w-full sm:w-auto"
+                    >
+                      <span>Open Next Chapter: "{adjacent.next.title}"</span>
+                      <ArrowRight size={18} />
+                    </button>
+                  ) : nextSection ? (
+                    <button
+                      onClick={handleOpenNextChapter}
+                      className="btn-vibrant-primary w-full sm:w-auto"
+                    >
+                      <span>🎉 Start Next Section: "{nextSection.title}"</span>
+                      <ArrowRight size={18} />
+                    </button>
+                  ) : (
                     <button
                       onClick={onBackToLearn}
                       className="btn-vibrant-primary w-full sm:w-auto"
                     >
                       <span>🏆 I am done! Back to Curriculum</span>
                     </button>
-                  </div>
-                )}
+                  )}
+                </div>
 
                 <button
                   onClick={() => goToStep("understand")}

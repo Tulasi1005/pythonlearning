@@ -1,6 +1,7 @@
 import app from "./app.js";
 import { config } from "./config/env.js";
 import { pool, checkDatabaseHealth } from "./config/db.js";
+import { runMigrations } from "../migrations/migrate.js";
 
 async function startServer() {
   const isDbHealthy = await checkDatabaseHealth();
@@ -8,6 +9,13 @@ async function startServer() {
     console.warn("WARNING: Unable to verify initial PostgreSQL connection on startup.");
   } else {
     console.log("Connected to PostgreSQL successfully.");
+    try {
+      console.log("Ensuring database migrations are up to date...");
+      await runMigrations(config.databaseUrl);
+      console.log("Database migrations verified.");
+    } catch (migErr) {
+      console.warn("Migration verification note:", migErr.message);
+    }
   }
 
   const server = app.listen(config.port, () => {

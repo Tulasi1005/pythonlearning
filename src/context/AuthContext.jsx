@@ -24,6 +24,11 @@ export function AuthProvider({ children, onSyncStage, onSyncLanguage }) {
   // Restore authenticated session from PostgreSQL on application startup
   useEffect(() => {
     let isMounted = true;
+    // Safety valve: Unblock UI after max 3 seconds if network hangs
+    const safetyTimeout = setTimeout(() => {
+      if (isMounted) setIsLoadingSession(false);
+    }, 3000);
+
     async function restoreSession() {
       try {
         const user = await getCurrentSession();
@@ -35,12 +40,16 @@ export function AuthProvider({ children, onSyncStage, onSyncLanguage }) {
       } catch (e) {
         // No active session
       } finally {
-        if (isMounted) setIsLoadingSession(false);
+        if (isMounted) {
+          clearTimeout(safetyTimeout);
+          setIsLoadingSession(false);
+        }
       }
     }
     restoreSession();
     return () => {
       isMounted = false;
+      clearTimeout(safetyTimeout);
     };
   }, [onSyncStage, onSyncLanguage]);
 

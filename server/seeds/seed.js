@@ -12,7 +12,11 @@ export async function runSeeds(dbUrl = process.env.DATABASE_URL) {
     throw new Error("DATABASE_URL is required for seeding.");
   }
 
-  const pool = new Pool({ connectionString: dbUrl });
+  const isLocal = dbUrl.includes("localhost") || dbUrl.includes("127.0.0.1");
+  const pool = new Pool({
+    connectionString: dbUrl,
+    ssl: isLocal ? false : { rejectUnauthorized: false }
+  });
   const client = await pool.connect();
 
   try {
