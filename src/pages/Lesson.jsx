@@ -7,6 +7,7 @@ export default function Lesson({
   topicId,
   onSelectTopic,
   onBackToLearn,
+  onBack,
   selectedStage,
   onSelectStage,
   onOpenStageModal,
@@ -29,7 +30,7 @@ export default function Lesson({
           The requested Python lesson could not be located.
         </p>
         <button
-          onClick={onBackToLearn}
+          onClick={onBack || onBackToLearn}
           className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#306998] text-white font-semibold text-sm cursor-pointer border-none"
         >
           <ArrowLeft size={16} />
@@ -45,6 +46,7 @@ export default function Lesson({
       adjacent={adjacent}
       onSelectTopic={onSelectTopic}
       onBackToLearn={onBackToLearn}
+      onBack={onBack || onBackToLearn}
       selectedStage={selectedStage}
       onSelectStage={onSelectStage}
       onOpenStageModal={onOpenStageModal}

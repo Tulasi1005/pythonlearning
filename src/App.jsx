@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import StageSelectorModal from "./components/StageSelectorModal";
@@ -20,6 +20,41 @@ import GlobalWordMeaningModal from "./components/WordMeaning/GlobalWordMeaningMo
 import FloatingDictionaryButton from "./components/FloatingDictionaryButton";
 import { RefreshCw } from "lucide-react";
 
+// Route resolution helpers for URL hash & history synchronization
+function getRouteFromLocation() {
+  const hash = typeof window !== "undefined" ? window.location.hash || "" : "";
+  if (!hash || hash === "#" || hash === "#/" || hash === "#/home") {
+    return { page: "home", topicId: "what-is-python" };
+  }
+  if (hash.startsWith("#/lesson")) {
+    const cleanHash = hash.replace(/^#\/?/, "");
+    const parts = cleanHash.split("?")[0].split("/");
+    const topicFromPath = parts[1];
+    const params = new URLSearchParams(hash.includes("?") ? hash.split("?")[1] : "");
+    const topicId = topicFromPath || params.get("topic") || "what-is-python";
+    return { page: "lesson", topicId };
+  }
+  if (hash.startsWith("#/learn")) return { page: "learn", topicId: "what-is-python" };
+  if (hash.startsWith("#/practice")) return { page: "practice", topicId: "what-is-python" };
+  if (hash.startsWith("#/projects")) return { page: "projects", topicId: "what-is-python" };
+  if (hash.startsWith("#/about")) return { page: "about", topicId: "what-is-python" };
+  if (hash.startsWith("#/auth") || hash.startsWith("#/login") || hash.startsWith("#/signup")) {
+    return { page: "auth", topicId: "what-is-python" };
+  }
+  return { page: "home", topicId: "what-is-python" };
+}
+
+function getHashForRoute(page, topicId) {
+  if (page === "home") return "#/home";
+  if (page === "lesson") return `#/lesson/${topicId || "what-is-python"}`;
+  if (page === "learn") return "#/learn";
+  if (page === "practice") return "#/practice";
+  if (page === "projects") return "#/projects";
+  if (page === "about") return "#/about";
+  if (page === "auth" || page === "login" || page === "signup") return "#/auth";
+  return "#/home";
+}
+
 function MainAppShell({
   selectedStage,
   handleSelectStage,
@@ -31,29 +66,149 @@ function MainAppShell({
   setLanguageModalOpen
 }) {
   const { isAuthenticated, isLoadingSession } = useAuth();
-  const [currentPage, setCurrentPage] = useState("home");
-  const [selectedTopicId, setSelectedTopicId] = useState("what-is-python");
-  const [guestMode, setGuestMode] = useState(false);
+  
+  // Initialize route from current URL hash
+  const initialRoute = useRef(getRouteFromLocation()).current;
+  const [currentPage, setCurrentPage] = useState(initialRoute.page);
+  const [selectedTopicId, setSelectedTopicId] = useState(initialRoute.topicId);
+  const [guestMode, setGuestMode] = useState(initialRoute.page !== "auth");
+  
+  // In-session navigation stack to track previous pages
+  const navHistoryRef = useRef([{ page: initialRoute.page, topicId: initialRoute.topicId }]);
+  const [historyDepth, setHistoryDepth] = useState(1);
+
+  // Initialize or synchronize browser history entry on initial mount
+  useEffect(() => {
+    const targetHash = getHashForRoute(initialRoute.page, initialRoute.topicId);
+    const stateObj = { page: initialRoute.page, topicId: initialRoute.topicId };
+    if (!window.history.state || window.location.hash !== targetHash) {
+      window.history.replaceState(stateObj, "", targetHash);
+    }
+  }, []);
+
+  // Listen to popstate event (mobile back button, gesture swipe back, browser back)
+  useEffect(() => {
+    const handlePopState = (event) => {
+      // If modal was open, close modal first and stay on current page
+      if (stageModalOpen) {
+        setStageModalOpen(false);
+        return;
+      }
+      if (languageModalOpen) {
+        setLanguageModalOpen(false);
+        return;
+      }
+
+      // Read route from history state or URL hash
+      let route = event.state;
+      if (!route || !route.page) {
+        route = getRouteFromLocation();
+      }
+
+      if (navHistoryRef.current.length > 1) {
+        navHistoryRef.current.pop();
+        setHistoryDepth(navHistoryRef.current.length);
+      }
+
+      if (route.page === "auth") {
+        setGuestMode(false);
+      } else {
+        setGuestMode(true);
+      }
+
+      setCurrentPage(route.page);
+      if (route.topicId) {
+        setSelectedTopicId(route.topicId);
+      }
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [stageModalOpen, languageModalOpen, setStageModalOpen, setLanguageModalOpen]);
+
+  // Navigate to a page and record in browser history
+  const navigateTo = (page, topicId = selectedTopicId, replace = false) => {
+    if (page === "login" || page === "signup" || page === "auth") {
+      setGuestMode(false);
+      const hash = "#/auth";
+      const stateObj = { page: "auth", topicId };
+      if (replace) {
+        window.history.replaceState(stateObj, "", hash);
+      } else {
+        window.history.pushState(stateObj, "", hash);
+        navHistoryRef.current.push(stateObj);
+        setHistoryDepth(navHistoryRef.current.length);
+      }
+      return;
+    }
+
+    setGuestMode(true);
+
+    const hash = getHashForRoute(page, topicId);
+    const stateObj = { page, topicId };
+
+    if (replace) {
+      window.history.replaceState(stateObj, "", hash);
+      if (navHistoryRef.current.length > 0) {
+        navHistoryRef.current[navHistoryRef.current.length - 1] = stateObj;
+      } else {
+        navHistoryRef.current = [stateObj];
+      }
+    } else {
+      const lastEntry = navHistoryRef.current[navHistoryRef.current.length - 1];
+      if (!lastEntry || lastEntry.page !== page || (page === "lesson" && lastEntry.topicId !== topicId)) {
+        window.history.pushState(stateObj, "", hash);
+        navHistoryRef.current.push(stateObj);
+        setHistoryDepth(navHistoryRef.current.length);
+      }
+    }
+
+    setCurrentPage(page);
+    if (topicId) setSelectedTopicId(topicId);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   const handleSelectTopic = (topicId) => {
-    setSelectedTopicId(topicId);
-    setCurrentPage("lesson");
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    navigateTo("lesson", topicId);
   };
 
   const handleNavigate = (page) => {
-    if (page === "login" || page === "signup") {
-      setGuestMode(false);
+    navigateTo(page);
+  };
+
+  // Back handler for both on-screen buttons and mobile navigation
+  const handleBack = () => {
+    if (stageModalOpen) {
+      setStageModalOpen(false);
       return;
     }
-    setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    if (languageModalOpen) {
+      setLanguageModalOpen(false);
+      return;
+    }
+
+    if (navHistoryRef.current.length > 1) {
+      window.history.back();
+    } else {
+      // Fallback hierarchy if user arrived directly or refreshed
+      if (currentPage === "lesson") {
+        navigateTo("learn", undefined, true);
+      } else if (currentPage !== "home") {
+        navigateTo("home", undefined, true);
+      }
+    }
   };
 
   const handleBackToLearn = () => {
-    setCurrentPage("learn");
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    if (navHistoryRef.current.length > 1) {
+      window.history.back();
+    } else {
+      navigateTo("learn", undefined, true);
+    }
   };
+
+  const canGoBack = historyDepth > 1 || currentPage !== "home";
 
   // While checking PostgreSQL session on startup
   if (isLoadingSession) {
@@ -76,8 +231,15 @@ function MainAppShell({
   if (!isAuthenticated && !guestMode) {
     return (
       <AuthPage
-        onContinueAsGuest={() => setGuestMode(true)}
+        onContinueAsGuest={() => {
+          setGuestMode(true);
+          navigateTo("home", undefined, true);
+        }}
         onSelectTopic={handleSelectTopic}
+        onBack={navHistoryRef.current.length > 1 ? handleBack : () => {
+          setGuestMode(true);
+          navigateTo("home", undefined, true);
+        }}
       />
     );
   }
@@ -94,6 +256,8 @@ function MainAppShell({
         selectedLanguage={selectedLanguage}
         onOpenLanguageModal={() => setLanguageModalOpen(true)}
         onShowAuthPage={() => setGuestMode(false)}
+        onBack={handleBack}
+        canGoBack={canGoBack}
       />
 
       {/* Stage Selector Modal */}
@@ -127,6 +291,8 @@ function MainAppShell({
             onSelectLanguage={handleSelectLanguage}
             onOpenStageModal={() => setStageModalOpen(true)}
             onOpenLanguageModal={() => setLanguageModalOpen(true)}
+            onBack={handleBack}
+            canGoBack={historyDepth > 1}
           />
         )}
 
@@ -138,6 +304,7 @@ function MainAppShell({
             selectedLanguage={selectedLanguage}
             onSelectLanguage={handleSelectLanguage}
             onOpenLanguageModal={() => setLanguageModalOpen(true)}
+            onBack={handleBack}
           />
         )}
 
@@ -146,6 +313,7 @@ function MainAppShell({
             topicId={selectedTopicId}
             onSelectTopic={handleSelectTopic}
             onBackToLearn={handleBackToLearn}
+            onBack={handleBack}
             selectedStage={selectedStage}
             onSelectStage={handleSelectStage}
             onOpenStageModal={() => setStageModalOpen(true)}
@@ -161,6 +329,7 @@ function MainAppShell({
             onOpenStageModal={() => setStageModalOpen(true)}
             selectedLanguage={selectedLanguage}
             onOpenLanguageModal={() => setLanguageModalOpen(true)}
+            onBack={handleBack}
           />
         )}
 
@@ -170,11 +339,15 @@ function MainAppShell({
             onOpenStageModal={() => setStageModalOpen(true)}
             selectedLanguage={selectedLanguage}
             onOpenLanguageModal={() => setLanguageModalOpen(true)}
+            onBack={handleBack}
           />
         )}
 
         {currentPage === "about" && (
-          <About onNavigate={handleNavigate} />
+          <About
+            onNavigate={handleNavigate}
+            onBack={handleBack}
+          />
         )}
       </main>
 

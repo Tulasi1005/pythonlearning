@@ -3,13 +3,15 @@ import { practiceData } from "../data/practiceData";
 import { LEARNING_STAGES, getStageById } from "../data/learningStages";
 import { getLanguageById } from "../data/learningLanguages";
 import QuestionCard from "../components/QuestionCard";
+import PageBackButton from "../components/PageBackButton";
 import { Code2, CheckCircle2, HelpCircle, Sparkles, Terminal } from "lucide-react";
 
 export default function Practice({
   selectedStage = "young",
   onOpenStageModal,
   selectedLanguage = "english",
-  onOpenLanguageModal
+  onOpenLanguageModal,
+  onBack
 }) {
   const [activeStageFilter, setActiveStageFilter] = useState(selectedStage);
   const currentStageMeta = getStageById(selectedStage);
@@ -22,7 +24,14 @@ export default function Practice({
   }, [activeStageFilter]);
 
   return (
-    <div className="practice-page max-w-5xl mx-auto px-3 sm:px-6 py-8 sm:py-12 animate-in">
+    <div className="practice-page max-w-5xl mx-auto px-3 sm:px-6 py-4 sm:py-8 md:py-10 animate-in">
+      {/* Back Navigation Button */}
+      {onBack && (
+        <div className="mb-3 sm:mb-4 flex items-center justify-start">
+          <PageBackButton onBack={onBack} label="Back" />
+        </div>
+      )}
+
       {/* Page Header */}
       <div className="mb-8 pb-8 border-b border-slate-200 dark:border-slate-800">
         <div className="flex items-center gap-3 mb-3">

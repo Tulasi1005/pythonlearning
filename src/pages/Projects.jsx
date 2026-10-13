@@ -3,13 +3,15 @@ import { projectsData } from "../data/projectsData";
 import { LEARNING_STAGES, getStageById } from "../data/learningStages";
 import { getLanguageById } from "../data/learningLanguages";
 import ProjectCard from "../components/ProjectCard";
+import PageBackButton from "../components/PageBackButton";
 import { FolderGit2, Sparkles, Folder } from "lucide-react";
 
 export default function Projects({
   selectedStage = "young",
   onOpenStageModal,
   selectedLanguage = "english",
-  onOpenLanguageModal
+  onOpenLanguageModal,
+  onBack
 }) {
   const [activeStageFilter, setActiveStageFilter] = useState(selectedStage);
   const currentStageMeta = getStageById(selectedStage);
@@ -21,7 +23,14 @@ export default function Projects({
   }, [activeStageFilter]);
 
   return (
-    <div className="projects-page max-w-6xl mx-auto px-3 sm:px-6 py-8 sm:py-12 animate-in">
+    <div className="projects-page max-w-6xl mx-auto px-3 sm:px-6 py-4 sm:py-8 md:py-10 animate-in">
+      {/* Back Navigation Button */}
+      {onBack && (
+        <div className="mb-3 sm:mb-4 flex items-center justify-start">
+          <PageBackButton onBack={onBack} label="Back" />
+        </div>
+      )}
+
       {/* Header */}
       <div className="text-center max-w-2xl mx-auto mb-10">
         <div className="flex flex-wrap items-center justify-center gap-2.5 mb-4">

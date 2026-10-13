@@ -1,10 +1,18 @@
 import React from "react";
 import { LEARNING_STAGES } from "../data/learningStages";
+import PageBackButton from "../components/PageBackButton";
 import { BookOpen, CheckCircle, ShieldCheck, Zap, Sparkles, Heart, ArrowRight } from "lucide-react";
 
-export default function About({ onNavigate }) {
+export default function About({ onNavigate, onBack }) {
   return (
-    <div className="about-page max-w-4xl mx-auto px-3 sm:px-6 py-8 sm:py-12 animate-in">
+    <div className="about-page max-w-4xl mx-auto px-3 sm:px-6 py-4 sm:py-8 md:py-10 animate-in">
+      {/* Back Navigation Button */}
+      {onBack && (
+        <div className="mb-3 sm:mb-4 flex items-center justify-start">
+          <PageBackButton onBack={onBack} label="Back" fallbackDestination="Home" />
+        </div>
+      )}
+
       {/* Page Header */}
       <div className="text-center max-w-2xl mx-auto mb-12">
         <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-violet-600 text-amber-300 flex items-center justify-center font-extrabold text-2xl mx-auto mb-4 shadow-md shadow-indigo-500/25 font-mono">

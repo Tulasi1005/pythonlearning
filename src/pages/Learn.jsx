@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { SECTIONS, allTopics } from "../data/allTopics";
 import TopicCard from "../components/TopicCard";
+import PageBackButton from "../components/PageBackButton";
 import { getStageById } from "../data/learningStages";
 import { getLanguageById } from "../data/learningLanguages";
 import { Search, BookOpen, Layers, X, Sparkles, Folder } from "lucide-react";
@@ -11,7 +12,8 @@ export default function Learn({
   onOpenStageModal,
   selectedLanguage = "english",
   onSelectLanguage,
-  onOpenLanguageModal
+  onOpenLanguageModal,
+  onBack
 }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSection, setSelectedSection] = useState("all");
@@ -39,7 +41,14 @@ export default function Learn({
   }, [searchQuery, selectedSection, selectedStage, selectedLanguage]);
 
   return (
-    <div className="learn-page max-w-6xl mx-auto px-3 sm:px-6 py-8 sm:py-12 animate-in">
+    <div className="learn-page max-w-6xl mx-auto px-3 sm:px-6 py-4 sm:py-8 md:py-10 animate-in">
+      {/* Back Navigation Button */}
+      {onBack && (
+        <div className="mb-3 sm:mb-4 flex items-center justify-start">
+          <PageBackButton onBack={onBack} label="Back" fallbackDestination="Home" />
+        </div>
+      )}
+
       {/* Page Header */}
       <div className="mb-8 pb-8 border-b border-slate-200 dark:border-slate-800">
         <div className="flex items-center gap-3 mb-3">

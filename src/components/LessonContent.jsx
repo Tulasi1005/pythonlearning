@@ -49,6 +49,7 @@ export default function LessonContent({
   adjacent,
   onSelectTopic,
   onBackToLearn,
+  onBack,
   selectedStage = "young",
   onSelectStage,
   onOpenStageModal,
@@ -231,36 +232,44 @@ export default function LessonContent({
       {showConfetti && <ConfettiCelebration active={showConfetti} onComplete={() => setShowConfetti(false)} />}
 
       {/* Top Breadcrumb & Progress Header */}
-      <div className="bg-white/95 dark:bg-[#0f172a]/95 backdrop-blur-md rounded-2xl border border-slate-200 dark:border-slate-800 p-4 sm:p-5 shadow-sm mb-6 sticky top-18 z-20 transition-colors">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
-          <div className="flex items-center gap-2 flex-wrap">
+      <div className="bg-white/95 dark:bg-[#0f172a]/95 backdrop-blur-md rounded-2xl border border-slate-200 dark:border-slate-800 p-3 sm:p-5 shadow-sm mb-6 sticky top-14 sm:top-16 z-20 transition-colors">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 mb-3">
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap min-w-0">
             <button
-              onClick={onBackToLearn}
-              className="text-xs sm:text-sm font-semibold text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition flex items-center gap-1.5 cursor-pointer bg-transparent border-none p-0"
-              title="Return to curriculum modules"
+              onClick={onBack || onBackToLearn}
+              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 transition cursor-pointer shadow-2xs group shrink-0 active:scale-95"
+              title="Return to previous page / curriculum"
             >
-              <ArrowLeft size={16} />
-              <span>{section.title}</span>
+              <ArrowLeft size={15} className="text-indigo-600 dark:text-indigo-400 group-hover:-translate-x-0.5 transition-transform" />
+              <span>Back</span>
             </button>
             <span className="text-slate-300 dark:text-slate-700">•</span>
-            <span className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200">
+            <button
+              onClick={onBackToLearn}
+              className="text-xs sm:text-sm font-semibold text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition flex items-center gap-1 cursor-pointer bg-transparent border-none p-0 max-w-[110px] xs:max-w-[160px] sm:max-w-[220px] truncate"
+              title="Return to curriculum modules"
+            >
+              <span>{section.title}</span>
+            </button>
+            <span className="text-slate-300 dark:text-slate-700 hidden sm:inline">•</span>
+            <span className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 hidden sm:inline">
               Topic {topicIndex} of {totalTopics}
             </span>
 
             {adjacent.prev && (
               <button
                 onClick={() => onSelectTopic(adjacent.prev.id)}
-                className="ml-1 inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-950/60 dark:hover:text-indigo-300 border border-slate-200 dark:border-slate-700 transition cursor-pointer"
+                className="ml-0.5 sm:ml-1 inline-flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-lg text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-950/60 dark:hover:text-indigo-300 border border-slate-200 dark:border-slate-700 transition cursor-pointer shrink-0"
                 title={`Back to: ${adjacent.prev.title}`}
               >
-                <ArrowLeft size={13} />
-                <span>Back to Previous</span>
+                <ArrowLeft size={12} />
+                <span>Prev</span>
               </button>
             )}
           </div>
 
           {/* Current Stage, Language & Bookmark Badges */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap shrink-0">
             <button
               onClick={() => toggleBookmark(topic.id)}
               className={`notion-tag text-xs font-bold cursor-pointer transition flex items-center gap-1.5 ${

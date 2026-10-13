@@ -1,6 +1,7 @@
 import React from "react";
 import LearningStageSelector from "../components/LearningStageSelector";
 import LanguageSelector from "../components/LanguageSelector";
+import PageBackButton from "../components/PageBackButton";
 import { getStageById } from "../data/learningStages";
 import { getLanguageById } from "../data/learningLanguages";
 import { useDictionary } from "../context/DictionaryContext";
@@ -34,7 +35,9 @@ export default function Home({
   selectedLanguage,
   onSelectLanguage,
   onOpenStageModal,
-  onOpenLanguageModal
+  onOpenLanguageModal,
+  onBack,
+  canGoBack
 }) {
   const { openDictionary } = useDictionary();
   const currentStageMeta = getStageById(selectedStage);
@@ -110,7 +113,14 @@ export default function Home({
   ];
 
   return (
-    <div className="home-page-container max-w-5xl mx-auto px-3 sm:px-6 py-8 sm:py-12 animate-in">
+    <div className="home-page-container max-w-5xl mx-auto px-3 sm:px-6 py-4 sm:py-8 md:py-10 animate-in">
+      {/* Back Navigation Button if navigated from elsewhere */}
+      {canGoBack && onBack && (
+        <div className="mb-3 sm:mb-4 flex items-center justify-start">
+          <PageBackButton onBack={onBack} label="Back to Previous Page" />
+        </div>
+      )}
+
       {/* 1. HERO SECTION */}
       <div className="mb-12 pb-10 border-b border-slate-200 dark:border-slate-800">
         {/* Top Tag */}

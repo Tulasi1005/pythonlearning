@@ -7,6 +7,7 @@ import {
   EyeOff,
   Sparkles,
   ArrowRight,
+  ArrowLeft,
   ShieldCheck,
   CheckCircle2,
   AlertCircle,
@@ -28,7 +29,7 @@ import { LEARNING_STAGES, getStageById } from "../data/learningStages";
 import { LEARNING_LANGUAGES, getLanguageById } from "../data/learningLanguages";
 import { AVATAR_OPTIONS } from "../services/authService";
 
-export default function AuthPage({ initialMode = "login", onContinueAsGuest, onSelectTopic }) {
+export default function AuthPage({ initialMode = "login", onContinueAsGuest, onSelectTopic, onBack }) {
   const { login, signup, resetPassword } = useAuth();
   const { theme, toggleTheme, isDark } = useTheme();
 
@@ -186,6 +187,30 @@ export default function AuthPage({ initialMode = "login", onContinueAsGuest, onS
       {/* Top Header */}
       <header className="auth-header">
         <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+          {onBack && (
+            <button
+              onClick={onBack}
+              style={{
+                padding: "0.45rem 0.75rem",
+                borderRadius: "0.75rem",
+                background: "var(--color-surface)",
+                color: "var(--color-text)",
+                border: "1px solid var(--color-border)",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: "0.35rem",
+                fontSize: "0.8rem",
+                fontWeight: "700",
+                boxShadow: "var(--shadow-2xs)"
+              }}
+              title="Go back"
+            >
+              <ArrowLeft size={15} style={{ color: "var(--color-indigo)" }} />
+              <span>Back</span>
+            </button>
+          )}
+
           <div style={{
             width: "2.5rem",
             height: "2.5rem",
