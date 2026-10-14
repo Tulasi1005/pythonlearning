@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import StageSelectorModal from "./components/StageSelectorModal";
@@ -65,10 +65,24 @@ function MainAppShell({
   languageModalOpen,
   setLanguageModalOpen
 }) {
-  const { isAuthenticated, isLoadingSession } = useAuth();
+  const { currentUser, updateProfile, isAuthenticated, isLoadingSession } = useAuth();
   
+  const handleStageChange = React.useCallback((stageId) => {
+    handleSelectStage(stageId);
+    if (currentUser && currentUser.stage !== stageId) {
+      updateProfile({ stage: stageId }).catch(() => {});
+    }
+  }, [handleSelectStage, currentUser, updateProfile]);
+
+  const handleLanguageChange = React.useCallback((langId) => {
+    handleSelectLanguage(langId);
+    if (currentUser && currentUser.language !== langId) {
+      updateProfile({ language: langId }).catch(() => {});
+    }
+  }, [handleSelectLanguage, currentUser, updateProfile]);
+
   // Initialize route from current URL hash
-  const initialRoute = useRef(getRouteFromLocation()).current;
+  const initialRoute = React.useRef(getRouteFromLocation()).current;
   const [currentPage, setCurrentPage] = useState(initialRoute.page);
   const [selectedTopicId, setSelectedTopicId] = useState(initialRoute.topicId);
   const [guestMode, setGuestMode] = useState(initialRoute.page !== "auth");
@@ -252,8 +266,10 @@ function MainAppShell({
         setCurrentPage={handleNavigate}
         onSelectTopic={handleSelectTopic}
         selectedStage={selectedStage}
+        onSelectStage={handleStageChange}
         onOpenStageModal={() => setStageModalOpen(true)}
         selectedLanguage={selectedLanguage}
+        onSelectLanguage={handleLanguageChange}
         onOpenLanguageModal={() => setLanguageModalOpen(true)}
         onShowAuthPage={() => setGuestMode(false)}
         onBack={handleBack}
@@ -265,7 +281,7 @@ function MainAppShell({
         isOpen={stageModalOpen}
         onClose={() => setStageModalOpen(false)}
         selectedStage={selectedStage}
-        onSelectStage={handleSelectStage}
+        onSelectStage={handleStageChange}
       />
 
       {/* Language Selector Modal */}
@@ -273,7 +289,7 @@ function MainAppShell({
         isOpen={languageModalOpen}
         onClose={() => setLanguageModalOpen(false)}
         selectedLanguage={selectedLanguage}
-        onSelectLanguage={handleSelectLanguage}
+        onSelectLanguage={handleLanguageChange}
       />
 
       {/* Global Authentication Modal */}
@@ -286,9 +302,9 @@ function MainAppShell({
             onNavigate={handleNavigate}
             onSelectTopic={handleSelectTopic}
             selectedStage={selectedStage}
-            onSelectStage={handleSelectStage}
+            onSelectStage={handleStageChange}
             selectedLanguage={selectedLanguage}
-            onSelectLanguage={handleSelectLanguage}
+            onSelectLanguage={handleLanguageChange}
             onOpenStageModal={() => setStageModalOpen(true)}
             onOpenLanguageModal={() => setLanguageModalOpen(true)}
             onBack={handleBack}
@@ -302,7 +318,7 @@ function MainAppShell({
             selectedStage={selectedStage}
             onOpenStageModal={() => setStageModalOpen(true)}
             selectedLanguage={selectedLanguage}
-            onSelectLanguage={handleSelectLanguage}
+            onSelectLanguage={handleLanguageChange}
             onOpenLanguageModal={() => setLanguageModalOpen(true)}
             onBack={handleBack}
           />
@@ -315,10 +331,10 @@ function MainAppShell({
             onBackToLearn={handleBackToLearn}
             onBack={handleBack}
             selectedStage={selectedStage}
-            onSelectStage={handleSelectStage}
+            onSelectStage={handleStageChange}
             onOpenStageModal={() => setStageModalOpen(true)}
             selectedLanguage={selectedLanguage}
-            onSelectLanguage={handleSelectLanguage}
+            onSelectLanguage={handleLanguageChange}
             onOpenLanguageModal={() => setLanguageModalOpen(true)}
           />
         )}
@@ -367,15 +383,15 @@ export default function App() {
   const [stageModalOpen, setStageModalOpen] = useState(false);
   const [languageModalOpen, setLanguageModalOpen] = useState(false);
 
-  const handleSelectStage = (stageId) => {
+  const handleSelectStage = React.useCallback((stageId) => {
     setSelectedStage(stageId);
     saveStage(stageId);
-  };
+  }, []);
 
-  const handleSelectLanguage = (langId) => {
+  const handleSelectLanguage = React.useCallback((langId) => {
     setSelectedLanguage(langId);
     saveLanguage(langId);
-  };
+  }, []);
 
   return (
     <ThemeProvider>

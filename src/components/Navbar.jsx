@@ -18,10 +18,12 @@ import {
   LogOut,
   Flame,
   Settings,
-  ArrowLeft
+  ArrowLeft,
+  Check,
+  Globe
 } from "lucide-react";
-import { getStageById } from "../data/learningStages";
-import { getLanguageById } from "../data/learningLanguages";
+import { LEARNING_STAGES, getStageById } from "../data/learningStages";
+import { LEARNING_LANGUAGES, getLanguageById } from "../data/learningLanguages";
 import { useDictionary } from "../context/DictionaryContext";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
@@ -32,8 +34,10 @@ export default function Navbar({
   setCurrentPage,
   onSelectTopic,
   selectedStage,
+  onSelectStage,
   onOpenStageModal,
   selectedLanguage = "english",
+  onSelectLanguage,
   onOpenLanguageModal,
   onShowAuthPage,
   onBack,
@@ -45,7 +49,12 @@ export default function Navbar({
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const [stageDropdownOpen, setStageDropdownOpen] = useState(false);
+  const [langDropdownOpen, setLangDropdownOpen] = useState(false);
+
   const userMenuRef = useRef(null);
+  const stageMenuRef = useRef(null);
+  const langMenuRef = useRef(null);
 
   const stageMeta = getStageById(selectedStage);
   const langMeta = getLanguageById(selectedLanguage);
@@ -62,6 +71,8 @@ export default function Navbar({
     setCurrentPage(pageId);
     setMobileMenuOpen(false);
     setUserDropdownOpen(false);
+    setStageDropdownOpen(false);
+    setLangDropdownOpen(false);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -70,6 +81,12 @@ export default function Navbar({
     const handleClickOutside = (e) => {
       if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
         setUserDropdownOpen(false);
+      }
+      if (stageMenuRef.current && !stageMenuRef.current.contains(e.target)) {
+        setStageDropdownOpen(false);
+      }
+      if (langMenuRef.current && !langMenuRef.current.contains(e.target)) {
+        setLangDropdownOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -143,27 +160,188 @@ export default function Navbar({
 
           <div className="h-5 w-[1px] bg-slate-200 dark:bg-slate-800 mx-0.5"></div>
 
-          {/* Learning Stage Pill */}
-          <button
-            onClick={onOpenStageModal}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 hover:bg-slate-200/80 dark:hover:bg-slate-700 transition cursor-pointer shadow-xs"
-            title="Click to switch learning stage (age)"
-          >
-            <span className="text-base">{stageMeta.icon}</span>
-            <span className="truncate max-w-[85px]">{stageMeta.label}</span>
-            <ChevronDown size={14} className="text-slate-400" />
-          </button>
+          {/* Learning Stage Pill with Interactive Dropdown */}
+          <div className="relative" ref={stageMenuRef}>
+            <button
+              onClick={() => {
+                setStageDropdownOpen(!stageDropdownOpen);
+                setLangDropdownOpen(false);
+                setUserDropdownOpen(false);
+              }}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold border transition cursor-pointer shadow-xs ${
+                stageDropdownOpen
+                  ? "bg-indigo-50 dark:bg-indigo-950/80 border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300"
+                  : "bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 hover:bg-slate-200/80 dark:hover:bg-slate-700"
+              }`}
+              title="Click to switch learning stage (age)"
+              aria-expanded={stageDropdownOpen}
+              aria-haspopup="true"
+            >
+              <span className="text-base select-none">{stageMeta.icon}</span>
+              <span className="truncate max-w-[85px]">{stageMeta.label}</span>
+              <ChevronDown
+                size={14}
+                className={`text-slate-400 transition-transform duration-200 ${
+                  stageDropdownOpen ? "rotate-180 text-indigo-600 dark:text-indigo-400" : ""
+                }`}
+              />
+            </button>
 
-          {/* Language Selector Pill */}
-          <button
-            onClick={onOpenLanguageModal}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 hover:bg-slate-200/80 dark:hover:bg-slate-700 transition cursor-pointer shadow-xs"
-            title="Click to switch explanation language"
-          >
-            <span className="text-base">{langMeta.icon}</span>
-            <span>{langMeta.shortLabel}</span>
-            <ChevronDown size={14} className="text-slate-400" />
-          </button>
+            {/* Stage Quick Switch Dropdown */}
+            {stageDropdownOpen && (
+              <div className="absolute right-0 mt-2 w-72 rounded-2xl bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 shadow-2xl p-2 z-50 animate-in">
+                <div className="px-2.5 py-1.5 mb-1.5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    Learning Stage (Age)
+                  </span>
+                  <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400">
+                    {stageMeta.label}
+                  </span>
+                </div>
+
+                <div className="space-y-1">
+                  {LEARNING_STAGES.map((stg) => {
+                    const isSelected = selectedStage === stg.id;
+                    return (
+                      <button
+                        key={stg.id}
+                        onClick={() => {
+                          if (onSelectStage) onSelectStage(stg.id);
+                          setStageDropdownOpen(false);
+                        }}
+                        className={`w-full flex items-center justify-between p-2 rounded-xl text-left transition cursor-pointer border ${
+                          isSelected
+                            ? "bg-indigo-50 dark:bg-indigo-950/60 border-indigo-200 dark:border-indigo-800 text-indigo-950 dark:text-indigo-200 font-bold"
+                            : "hover:bg-slate-100 dark:hover:bg-slate-800/80 border-transparent text-slate-700 dark:text-slate-200"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-xl shrink-0 select-none">{stg.icon}</span>
+                          <div className="min-w-0">
+                            <div className="text-xs font-bold leading-tight truncate">
+                              {stg.label}
+                            </div>
+                            <div className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight truncate">
+                              {stg.ageRange} • {stg.shortDesc.slice(0, 30)}...
+                            </div>
+                          </div>
+                        </div>
+                        {isSelected && (
+                          <div className="w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center shrink-0 ml-1.5">
+                            <Check size={12} strokeWidth={3} />
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="pt-1.5 mt-1 border-t border-slate-100 dark:border-slate-800">
+                  <button
+                    onClick={() => {
+                      setStageDropdownOpen(false);
+                      if (onOpenStageModal) onOpenStageModal();
+                    }}
+                    className="w-full py-1.5 px-2 text-[11px] font-bold text-center text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer bg-transparent border-none"
+                  >
+                    View All Stage Details & Cards →
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Language Selector Pill with Interactive Dropdown */}
+          <div className="relative" ref={langMenuRef}>
+            <button
+              onClick={() => {
+                setLangDropdownOpen(!langDropdownOpen);
+                setStageDropdownOpen(false);
+                setUserDropdownOpen(false);
+              }}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold border transition cursor-pointer shadow-xs ${
+                langDropdownOpen
+                  ? "bg-indigo-50 dark:bg-indigo-950/80 border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300"
+                  : "bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 hover:bg-slate-200/80 dark:hover:bg-slate-700"
+              }`}
+              title="Click to switch explanation language"
+              aria-expanded={langDropdownOpen}
+              aria-haspopup="true"
+            >
+              <span className="text-base select-none">{langMeta.icon}</span>
+              <span>{langMeta.shortLabel}</span>
+              <ChevronDown
+                size={14}
+                className={`text-slate-400 transition-transform duration-200 ${
+                  langDropdownOpen ? "rotate-180 text-indigo-600 dark:text-indigo-400" : ""
+                }`}
+              />
+            </button>
+
+            {/* Language Quick Switch Dropdown */}
+            {langDropdownOpen && (
+              <div className="absolute right-0 mt-2 w-72 rounded-2xl bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 shadow-2xl p-2 z-50 animate-in">
+                <div className="px-2.5 py-1.5 mb-1.5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                  <div className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    <Globe size={13} className="text-indigo-500" />
+                    <span>Learning Language</span>
+                  </div>
+                  <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400">
+                    {langMeta.shortLabel}
+                  </span>
+                </div>
+
+                <div className="space-y-1">
+                  {LEARNING_LANGUAGES.map((lang) => {
+                    const isSelected = selectedLanguage === lang.id;
+                    return (
+                      <button
+                        key={lang.id}
+                        onClick={() => {
+                          if (onSelectLanguage) onSelectLanguage(lang.id);
+                          setLangDropdownOpen(false);
+                        }}
+                        className={`w-full flex items-center justify-between p-2 rounded-xl text-left transition cursor-pointer border ${
+                          isSelected
+                            ? "bg-indigo-50 dark:bg-indigo-950/60 border-indigo-200 dark:border-indigo-800 text-indigo-950 dark:text-indigo-200 font-bold"
+                            : "hover:bg-slate-100 dark:hover:bg-slate-800/80 border-transparent text-slate-700 dark:text-slate-200"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="text-xl shrink-0 select-none">{lang.icon}</span>
+                          <div className="min-w-0">
+                            <div className="text-xs font-bold leading-tight truncate">
+                              {lang.label}
+                            </div>
+                            <div className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight truncate">
+                              {lang.shortLabel} • {lang.description.slice(0, 36)}...
+                            </div>
+                          </div>
+                        </div>
+                        {isSelected && (
+                          <div className="w-5 h-5 rounded-full bg-indigo-600 text-white flex items-center justify-center shrink-0 ml-1.5">
+                            <Check size={12} strokeWidth={3} />
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="pt-1.5 mt-1 border-t border-slate-100 dark:border-slate-800">
+                  <button
+                    onClick={() => {
+                      setLangDropdownOpen(false);
+                      if (onOpenLanguageModal) onOpenLanguageModal();
+                    }}
+                    className="w-full py-1.5 px-2 text-[11px] font-bold text-center text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer bg-transparent border-none"
+                  >
+                    View Full Multi-Language Guide →
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Dictionary Action */}
           <button

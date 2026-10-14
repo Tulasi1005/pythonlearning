@@ -29,9 +29,9 @@ async function request(endpoint, options = {}) {
     ...(options.headers || {})
   };
 
-  // 4 second timeout controller to avoid hanging on sleeping/offline servers
+  // 12 second timeout controller to accommodate cloud cold starts and database queries
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), options.timeoutMs || 4000);
+  const timeoutId = setTimeout(() => controller.abort(), options.timeoutMs || 12000);
 
   const config = {
     ...options,

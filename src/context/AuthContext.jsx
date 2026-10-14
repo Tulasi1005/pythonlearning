@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
 import {
   getCurrentSession,
   loginUser,
@@ -21,21 +21,26 @@ export function AuthProvider({ children, onSyncStage, onSyncLanguage }) {
   const [authModalMode, setAuthModalMode] = useState("login"); // 'login' | 'signup' | 'profile' | 'forgot'
   const [authNotice, setAuthNotice] = useState(null);
 
+  const onSyncStageRef = useRef(onSyncStage);
+  onSyncStageRef.current = onSyncStage;
+  const onSyncLanguageRef = useRef(onSyncLanguage);
+  onSyncLanguageRef.current = onSyncLanguage;
+
   // Restore authenticated session from PostgreSQL on application startup
   useEffect(() => {
     let isMounted = true;
-    // Safety valve: Unblock UI after max 3 seconds if network hangs
+    // Safety valve: Unblock UI after max 1.5 seconds if server is offline/sleeping
     const safetyTimeout = setTimeout(() => {
       if (isMounted) setIsLoadingSession(false);
-    }, 3000);
+    }, 1500);
 
     async function restoreSession() {
       try {
         const user = await getCurrentSession();
         if (isMounted && user) {
           setCurrentUser(user);
-          if (onSyncStage && user.stage) onSyncStage(user.stage);
-          if (onSyncLanguage && user.language) onSyncLanguage(user.language);
+          if (onSyncStageRef.current && user.stage) onSyncStageRef.current(user.stage);
+          if (onSyncLanguageRef.current && user.language) onSyncLanguageRef.current(user.language);
         }
       } catch (e) {
         // No active session
@@ -51,7 +56,7 @@ export function AuthProvider({ children, onSyncStage, onSyncLanguage }) {
       isMounted = false;
       clearTimeout(safetyTimeout);
     };
-  }, [onSyncStage, onSyncLanguage]);
+  }, []);
 
   const openAuthModal = useCallback((mode = "login", notice = null) => {
     setAuthModalMode(mode);
@@ -68,24 +73,24 @@ export function AuthProvider({ children, onSyncStage, onSyncLanguage }) {
     async ({ emailOrUsername, password, rememberMe }) => {
       const user = await loginUser({ emailOrUsername, password, rememberMe });
       setCurrentUser(user);
-      if (onSyncStage && user.stage) onSyncStage(user.stage);
-      if (onSyncLanguage && user.language) onSyncLanguage(user.language);
+      if (onSyncStageRef.current && user.stage) onSyncStageRef.current(user.stage);
+      if (onSyncLanguageRef.current && user.language) onSyncLanguageRef.current(user.language);
       closeAuthModal();
       return user;
     },
-    [closeAuthModal, onSyncStage, onSyncLanguage]
+    [closeAuthModal]
   );
 
   const signup = useCallback(
     async (formData) => {
       const user = await signUpUser(formData);
       setCurrentUser(user);
-      if (onSyncStage && user.stage) onSyncStage(user.stage);
-      if (onSyncLanguage && user.language) onSyncLanguage(user.language);
+      if (onSyncStageRef.current && user.stage) onSyncStageRef.current(user.stage);
+      if (onSyncLanguageRef.current && user.language) onSyncLanguageRef.current(user.language);
       closeAuthModal();
       return user;
     },
-    [closeAuthModal, onSyncStage, onSyncLanguage]
+    [closeAuthModal]
   );
 
   const logout = useCallback(async () => {
@@ -99,11 +104,11 @@ export function AuthProvider({ children, onSyncStage, onSyncLanguage }) {
       if (!currentUser) return null;
       const updated = await updateUserProfile(currentUser.id, updates);
       setCurrentUser(updated);
-      if (updates.stage && onSyncStage) onSyncStage(updates.stage);
-      if (updates.language && onSyncLanguage) onSyncLanguage(updates.language);
+      if (updates.stage && onSyncStageRef.current) onSyncStageRef.current(updates.stage);
+      if (updates.language && onSyncLanguageRef.current) onSyncLanguageRef.current(updates.language);
       return updated;
     },
-    [currentUser, onSyncStage, onSyncLanguage]
+    [currentUser]
   );
 
   const toggleBookmark = useCallback(
